@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm create next-app@latest src --typescript --eslint --app --no-tailwind --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(pnpm add @mui/material @mui/icons-material @emotion/react @emotion/styled @anthropic-ai/sdk youtube-transcript)",
+      "Bash(pnpm add @mui/material-nextjs)",
+      "Bash(pnpm build)"
+    ]
+  }
+}
