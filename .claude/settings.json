@@ -7,9 +7,20 @@
       "MultiEdit",
       "Bash(npm run *)",
       "Bash(npx *)",
+      "Bash(pnpm *)",
       "Bash(git *)",
       "Bash(mkdir *)",
-      "Bash(cat *)"
-    ],
+      "Bash(cat *)",
+      "Bash(rm *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "mcp__playwright__*"
+    ]
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": ["@playwright/mcp@latest"]
+    }
   }
 }

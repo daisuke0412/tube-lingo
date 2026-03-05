@@ -3,7 +3,7 @@
 ## アプリのディレクトリ構成
 
 ```
-TubeLingo/
+tube-lingo/
 ├── src/
 │   ├── app/                          # Next.js App Router（ルーティングのみ）
 │   │   ├── layout.tsx                # ルートレイアウト
