@@ -257,7 +257,7 @@ export default function LearningScreen({
               cursor: "pointer",
               backgroundColor:
                 index === currentIndex
-                  ? "primary.light"
+                  ? "#dbeafe"
                   : "transparent",
               "&:hover": { backgroundColor: "action.hover" },
               display: "inline-flex",
