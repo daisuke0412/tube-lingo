@@ -47,6 +47,7 @@ export default function InitScreen({ onStart }: InitScreenProps) {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
+        justifyContent: "center",
         px: 3,
         py: 4,
         maxWidth: 480,

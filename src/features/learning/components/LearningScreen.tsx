@@ -251,7 +251,7 @@ export default function LearningScreen({
             }}
             onClick={() => handleTranscriptClick(item)}
             sx={{
-              py: 0.5,
+              py: 0.125,
               px: 1,
               borderRadius: 1,
               cursor: "pointer",

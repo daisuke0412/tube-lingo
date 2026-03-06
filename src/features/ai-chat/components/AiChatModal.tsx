@@ -173,7 +173,13 @@ export default function AiChatModal({
                       : "12px 12px 12px 2px",
                 }}
               >
-                <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    color: msg.role === "user" ? "#fff" : "inherit",
+                  }}
+                >
                   {msg.content}
                 </Typography>
               </Paper>

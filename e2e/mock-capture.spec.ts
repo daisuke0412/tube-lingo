@@ -2,9 +2,9 @@ import { test } from "@playwright/test";
 import path from "path";
 
 // 各画面モックのキャプチャを取得する
-// 出力先: docs/designs/evidence/
+// 出力先: docs/designs/mock/
 
-const OUTPUT_DIR = path.join(__dirname, "../docs/designs/evidence");
+const OUTPUT_DIR = path.join(__dirname, "../docs/designs/mock");
 
 test.describe("画面モックキャプチャ", () => {
   test.use({
@@ -18,7 +18,7 @@ test.describe("画面モックキャプチャ", () => {
       (el as HTMLElement).style.display = "none";
     });
     await page.screenshot({
-      path: path.join(OUTPUT_DIR, "s01-init.png"),
+      path: path.join(OUTPUT_DIR, "S-01_01_initial_pending-review.png"),
       fullPage: false,
     });
   });
@@ -32,7 +32,7 @@ test.describe("画面モックキャプチャ", () => {
     // YouTube IFrame の読み込みを少し待つ
     await page.waitForTimeout(1000);
     await page.screenshot({
-      path: path.join(OUTPUT_DIR, "s02-learning.png"),
+      path: path.join(OUTPUT_DIR, "S-02_01_initial_pending-review.png"),
       fullPage: false,
     });
   });
@@ -44,7 +44,7 @@ test.describe("画面モックキャプチャ", () => {
       (el as HTMLElement).style.display = "none";
     });
     await page.screenshot({
-      path: path.join(OUTPUT_DIR, "s02-learning-selection.png"),
+      path: path.join(OUTPUT_DIR, "S-02_02_text-selection_pending-review.png"),
       fullPage: false,
     });
   });
@@ -56,7 +56,7 @@ test.describe("画面モックキャプチャ", () => {
       (el as HTMLElement).style.display = "none";
     });
     await page.screenshot({
-      path: path.join(OUTPUT_DIR, "s02-learning-translation.png"),
+      path: path.join(OUTPUT_DIR, "S-02_03_translation_pending-review.png"),
       fullPage: false,
     });
   });
@@ -68,7 +68,7 @@ test.describe("画面モックキャプチャ", () => {
       (el as HTMLElement).style.display = "none";
     });
     await page.screenshot({
-      path: path.join(OUTPUT_DIR, "s02m-chat-new.png"),
+      path: path.join(OUTPUT_DIR, "S-02-M_01_new-chat_pending-review.png"),
       fullPage: false,
     });
   });
@@ -80,7 +80,7 @@ test.describe("画面モックキャプチャ", () => {
       (el as HTMLElement).style.display = "none";
     });
     await page.screenshot({
-      path: path.join(OUTPUT_DIR, "s02m-chat-history.png"),
+      path: path.join(OUTPUT_DIR, "S-02-M_02_chat-history_pending-review.png"),
       fullPage: false,
     });
   });
