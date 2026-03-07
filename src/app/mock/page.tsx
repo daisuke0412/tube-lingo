@@ -105,11 +105,7 @@ function MockScreen({ view }: { view: MockView }) {
 
   if (view === "s02-learning") {
     return (
-      <MockLearningScreen
-        chatAskedIndices={new Set([1, 4])}
-        showSelection={false}
-        showTranslation={false}
-      />
+      <MockLearningScreen />
     );
   }
 
@@ -130,11 +126,7 @@ function MockScreen({ view }: { view: MockView }) {
       <Box sx={{ position: "relative", height: "100%", overflow: "hidden" }}>
         {/* 背景として学習画面（暗転） */}
         <Box sx={{ filter: "brightness(0.4)", height: "100%" }}>
-          <MockLearningScreen
-            chatAskedIndices={new Set()}
-            showSelection={false}
-            showTranslation={false}
-          />
+          <MockLearningScreen />
         </Box>
         {/* モーダル */}
         <AiChatModal
@@ -154,11 +146,7 @@ function MockScreen({ view }: { view: MockView }) {
       <Box sx={{ position: "relative", height: "100%", overflow: "hidden" }}>
         {/* 背景として学習画面（暗転） */}
         <Box sx={{ filter: "brightness(0.4)", height: "100%" }}>
-          <MockLearningScreen
-            chatAskedIndices={new Set([1])}
-            showSelection={false}
-            showTranslation={false}
-          />
+          <MockLearningScreen />
         </Box>
         {/* モーダル（チャット履歴あり） */}
         <AiChatModal
@@ -177,15 +165,7 @@ function MockScreen({ view }: { view: MockView }) {
 }
 
 // 学習画面のモック表示（YouTube IFrame なしで字幕のみ）
-function MockLearningScreen({
-  chatAskedIndices,
-  showSelection,
-  showTranslation,
-}: {
-  chatAskedIndices: Set<number>;
-  showSelection: boolean;
-  showTranslation: boolean;
-}) {
+function MockLearningScreen() {
   return (
     <LearningScreen
       apiKey="sk-ant-mock"
