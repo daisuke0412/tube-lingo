@@ -1,10 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pnpm create next-app@latest src --typescript --eslint --app --no-tailwind --no-src-dir --import-alias \"@/*\" --yes)",
-      "Bash(pnpm add @mui/material @mui/icons-material @emotion/react @emotion/styled @anthropic-ai/sdk youtube-transcript)",
-      "Bash(pnpm add @mui/material-nextjs)",
-      "Bash(pnpm build)"
+      "Bash(node_modules/.bin/playwright test e2e/mock-capture.spec.ts --project=chromium)",
+      "Bash(node_modules/.bin/playwright test e2e/mock-capture.spec.ts --project=chromium --workers=1 --timeout=60000)",
+      "Bash(node_modules/.bin/playwright test e2e/mock-capture.spec.ts --project=chromium --workers=1 --timeout=60000 --grep \"翻訳結果\")"
     ]
   }
 }

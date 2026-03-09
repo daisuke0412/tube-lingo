@@ -1,3 +1,4 @@
+```markdown
 # TubeLingo - CLAUDE.md
 
 Claude Codeへの行動指示とドキュメントのナビゲーション。
@@ -24,8 +25,10 @@ Claude Codeへの行動指示とドキュメントのナビゲーション。
 
 ---
 
-## カスタムスラッシュコマンド
+## アーキテクチャ
 
-`.claude/commands/` 配下に定義。
+- **フロントエンド**: `frontend/` — React + Vite + MUI
+- **バックエンド**: `backend/` — FastAPI (Python)
+- ルートの `package.json` でモノレポとして管理（`pnpm dev` で両方起動）
 
-- `/e2e-test` → Playwright E2Eテストの作成・実行
+```

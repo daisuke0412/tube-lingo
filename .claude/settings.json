@@ -5,6 +5,7 @@
       "Write",
       "Edit",
       "MultiEdit",
+      "Bash(echo *)",
       "Bash(npm run *)",
       "Bash(npx *)",
       "Bash(pnpm *)",
