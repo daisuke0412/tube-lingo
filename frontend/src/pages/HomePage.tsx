@@ -1,6 +1,6 @@
-import InitScreenMock from "../features/init/components/mock/InitScreenMock";
+import InitScreen from "../features/init/components/InitScreen";
 
 /** ホームページ（/）*/
 export default function HomePage() {
-  return <InitScreenMock />;
+  return <InitScreen />;
 }
