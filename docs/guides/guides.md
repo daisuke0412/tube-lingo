@@ -1,6 +1,35 @@
 # TubeLingo 開発ガイド
 
-## アプリのディレクトリ構成
+## アーキテクチャ概要
+
+::: mermaid
+graph LR
+    User[ユーザー] --> SPA
+
+    subgraph Frontend["フロントエンド"]
+        SPA[React SPA]
+    end
+
+    subgraph Backend["バックエンド"]
+        Router[FAST API]
+    end
+
+    SPA -->|リクエスト| Router
+    Router -->|レスポンス| SPA
+
+    Router -->|youtube-transcript-api| YouTube[YouTube字幕]
+    Router -->|Anthropic SDK| Claude[Claude API]
+
+    classDef frontend fill:#e8f5e8,stroke:#388e3c
+    classDef backend fill:#fce4ec,stroke:#c2185b
+    classDef external fill:#fff3e0,stroke:#f57c00
+
+    class SPA frontend
+    class Router,Service backend
+    class YouTube,Claude external
+:::
+
+## アプリのディレクトリ構成イメージ
 
 ```
 tube-lingo/
@@ -18,42 +47,44 @@ tube-lingo/
 │       ├── features/                 # 機能単位のモジュール
 │       │   ├── init/                 # 初期画面（URL入力）
 │       │   │   ├── components/
+│       │   │   │   ├── mock/         # モックコンポーネント（実装後も残す）
 │       │   │   │   └── InitScreen.tsx
 │       │   │   └── hooks/
 │       │   │       └── useInitForm.ts
 │       │   ├── learning/             # 学習画面
 │       │   └── ai-chat/              # AIチャット
 │       ├── shared/                   # 複数featureをまたぐ共通資産
-│       │   ├── lib/
-│       │   │   └── youtube.ts
-│       │   └── types/
-│       │       └── index.ts
+│       │   ├── lib/                  # 共有の
+│       │   └── types/                # 共有の型定義
 │       └── providers/
-│           └── ThemeRegistry.tsx      # MUI ThemeProvider
+│           └── ThemeRegistry.tsx     # MUI ThemeProvider
 ├── backend/                          # FastAPI (Python)
-│   ├── requirements.txt
+│   ├── requirements.txt              # 依存パッケージ
 │   └── app/
 │       ├── main.py                   # FastAPI アプリ定義・CORS・ルーター登録
-│       └── routers/
-│           ├── transcript.py         # GET /api/transcript?url=...
-│           └── explain.py            # POST /api/explain（SSEストリーミング）
+│       ├── config.py                 # 設定値（CORSオリジン等）
+│       ├── routers/                  # エンドポイント定義のみ（薄いラッパー）
+│       │   ├── transcript.py         # GET /api/transcript?url=...
+│       │   └── explain.py            # POST /api/explain（SSEストリーミング）
+│       ├── services/                 # ビジネスロジック
+│       │   ├── transcript.py         # YouTube字幕取得ロジック
+│       │   └── explain.py            # Claude API呼び出し・SSE生成ロジック
+│       └── prompts/                  # プロンプトテンプレート
+│           ├── explain_initial.txt   # P-01 初回解説プロンプト
+│           └── explain_followup.txt  # P-02 追加質問プロンプト
 ├── docs/
+│   ├── requirements/
+│   │   └── requirements.md           # アプリ概要・機能要件・MVP範囲
+│   ├── guides/
+│   │   └── guides.md                 # 技術スタック・ディレクトリ構成・規約（このファイル）
+│   └── designs/
+│       ├── screens/                  # 画面設計書
+│       │   └── screens.md            # 画面インデックス・遷移図
+│       ├── apis/                     # API設計書
+│       └── prompts/                  # プロンプト設計書
 ├── poc/
 └── CLAUDE.md
 ```
-
-### ディレクトリ構成の方針
-
-| ディレクトリ | 役割 |
-|---|---|
-| `frontend/src/pages/` | ルーティングに対応するページコンポーネント |
-| `frontend/src/features/<name>/` | 機能単位のモジュール。components/ と hooks/ を内包 |
-| `frontend/src/shared/` | 複数 feature をまたいで使う共通資産 |
-| `frontend/src/providers/` | アプリ全体に影響するグローバル Provider |
-| `backend/app/routers/` | FastAPI のエンドポイント定義 |
-
-`features/` 配下は、基本的に画面単位で作成すること。学習画面とAIチャットモーダルは別画面として扱う。
-
 
 ## 技術スタック
 
@@ -67,7 +98,7 @@ tube-lingo/
 | Material UI (MUI) | v7.x |
 
 #### Tailwind CSS は使わない
-スタイルは **MUI の `sx` prop および `styled()`** で統一する。
+スタイルは **MUI の `sx` prop** で統一する。
 `style=` 属性は原則禁止（MUI の仕組みで管理する）。
 
 ### バックエンド
@@ -97,9 +128,7 @@ tube-lingo/
 - コメントは日本語で書く
 
 ### エラーハンドリング
-- APIエラーは日本語メッセージでユーザーに表示する
-- エラーコードの定義は [docs/requirements/requirements.md#エラー定義](../requirements/requirements.md#エラー定義) を参照
-
+- エラーハンドリングは各設計書に従う
 
 ## セキュリティ原則
 
@@ -121,43 +150,3 @@ tube-lingo/
 
 - 使用モデル: `claude-sonnet` の最新モデルをなるべく利用
 - このファイルの記載を変更しない限り、コード内で勝手に変更しない
-
----
-
-## 開発コマンド
-
-```bash
-# 初回セットアップ
-pnpm setup                # frontend の依存 + backend の venv + pip install
-
-# 開発サーバー起動（フロントエンド + バックエンドを同時起動）
-pnpm dev                  # localhost:5173 (Vite) + localhost:8000 (FastAPI)
-
-# 個別起動
-pnpm dev:frontend         # Vite dev server (localhost:5173)
-pnpm dev:backend          # FastAPI (localhost:8000)
-
-# ビルド・チェック
-pnpm build                # フロントエンドのプロダクションビルド
-pnpm lint                 # ESLint
-pnpm type-check           # tsc --noEmit
-```
-
----
-
-## デプロイ方針
-
-### ローカル実行（MVP）
-
-YouTube の字幕取得は住宅IPが必須（クラウドIPはブロックされる）のため、
-MVP ではローカルマシンでバックエンドを起動する構成を採用。
-
-```
-[ブラウザ] → [Vite dev / ビルド済みSPA] → [ローカル FastAPI :8000]
-                                               ├── YouTube字幕取得（住宅IP）
-                                               └── Claude API呼び出し
-```
-
-### 将来の拡張
-- 外部公開
-- Docker Compose でコンテナ化
