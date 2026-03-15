@@ -30,11 +30,5 @@
       "Bash(where *)",
       "mcp__playwright__*"
     ]
-  },
-  "mcpServers": {
-    "playwright": {
-      "command": "npx",
-      "args": ["@playwright/mcp@latest"]
-    }
   }
 }

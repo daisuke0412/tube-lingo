@@ -49,38 +49,32 @@ YouTubeを使った英語学習アプリ。
 - **dev-screen-mock** — モック開発スキル
 - **dev-screen-logic** — 画面実開発スキル
 - **dev-api** — API開発スキル
-- **settings.json** — Playwright MCPツールを設定
+
+- **playwrightセットアップ** - Playwright MCPサーバを追加
+  - `npm install -g @playwright/mcp` でplaywrightをインストール
+  - `claude mcp add --scope project playwright -- npx @playwright/mcp@latest` でMCPサーバをClaudeに追加
+  - `npx playwright install chromium` でchromiumを設定
+
 
 **Claude利用：** チャットで壁打ちしながら作成
 
 ### 4. API実装
 
-1. Claudeで実装
-
+1. Claudeで実装  
 **Claude利用：** Plan modeでプランを立ててもらい、確認した後に実行
 
-2. 手動でcurlコマンドによってテスト実行
-
+2. 手動でcurlコマンドによってテスト実行  
 **Claude利用：** テストケースとテスト実行コマンドを作成
 
-### 5. Reactアプリ立ち上げ
+### 5. Reactアプリ立ち上げ + モック開発
 
-**Claude利用：** チャットで指示
+1. モック開発  
+**Claude利用：** Plan modeでプランを立ててもらい、確認した後に実行。screen-mockスキルを利用
 
-### 6. モック開発
+2. キャプチャをレビューして修正指示
+3. アプリ修正して再度キャプチャ取得
+4. 繰り返す（3〜4回くらい実施）
 
-1. モック開発
-2. プリ起動して、Playwrightを使ってキャプチャを取得
-3. キャプチャをレビューして修正指示
-4. アプリ修正して再度キャプチャ取得
-5. 繰り返す（3〜4回くらい実施）
-
-**Claude利用：** チャットで指示、screen-mockスキルを利用
-
-### 7. ロジック実装
-
-1. ロジック開発
-2. アプリ起動して、Playwrightを使ってキャプチャを取得
 3. キャプチャをレビューして修正指示
 4. アプリ修正して再度キャプチャ取得
 5. 繰り返す

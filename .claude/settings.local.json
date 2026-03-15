@@ -5,5 +5,9 @@
       "Bash(node_modules/.bin/playwright test e2e/mock-capture.spec.ts --project=chromium --workers=1 --timeout=60000)",
       "Bash(node_modules/.bin/playwright test e2e/mock-capture.spec.ts --project=chromium --workers=1 --timeout=60000 --grep \"翻訳結果\")"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "playwright"
+  ],
+  "enableAllProjectMcpServers": true
 }
