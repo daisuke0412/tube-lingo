@@ -53,7 +53,7 @@ FastAPI の routers・services を実装する。
 ---
 
 ## Step 5: 動作確認
-1. `pnpm dev:backend` でバックエンドサーバーを起動する
+1. `uvicorn app.main:app --reload --port 8000` でバックエンドサーバーを起動する
 2. curl または httpie で各エンドポイントを叩いて動作確認する：
 
 ```bash
