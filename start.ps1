@@ -3,10 +3,10 @@
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-# バックエンドをバックグラウンド起動（出力は同じターミナルに表示）
+# バックエンドをバックグラウンド起動
 Write-Host "Starting backend (port 8000)..." -ForegroundColor Cyan
 $backend = Start-Process -NoNewWindow -PassThru powershell `
-  -ArgumentList "-Command", "cd '$ScriptDir\backend'; & '.\.venv\Scripts\Activate.ps1'; uvicorn app.main:app --reload --port 8000"
+  -ArgumentList "-Command", "cd '$ScriptDir\backend'; uvicorn app.main:app --reload --port 8000"
 
 Write-Host "Starting frontend (port 5173)..." -ForegroundColor Cyan
 Write-Host ""

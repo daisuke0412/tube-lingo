@@ -1,24 +1,25 @@
+import { memo } from "react";
 import { Box, IconButton, Typography } from "@mui/material";
 import {
   PlayArrow as PlayArrowIcon,
   Chat as ChatIcon,
 } from "@mui/icons-material";
-import type { TranscriptItem, ChatMessage } from "../../../shared/types";
+import type { TranscriptItem } from "../../../shared/types";
 
 interface TranscriptListProps {
   transcript: TranscriptItem[];
   activeIndex: number;
-  chatHistoryMap: Map<number, ChatMessage[]>;
+  chatLineIndices: Set<number>;
   onSeek: (seconds: number) => void;
   onChatIconClick: (index: number) => void;
   setLineRef: (index: number, el: HTMLElement | null) => void;
 }
 
-/** 字幕リスト表示コンポーネント */
-export default function TranscriptList({
+/** 字幕リスト表示コンポーネント（メモ化） */
+const TranscriptList = memo(function TranscriptList({
   transcript,
   activeIndex,
-  chatHistoryMap,
+  chatLineIndices,
   onSeek,
   onChatIconClick,
   setLineRef,
@@ -27,7 +28,7 @@ export default function TranscriptList({
     <Box sx={{ p: 1 }}>
       {transcript.map((item, index) => (
         <Box
-          key={index}
+          key={`${item.start}-${index}`}
           ref={(el: HTMLElement | null) => setLineRef(index, el)}
           data-line-index={index}
           sx={{
@@ -55,7 +56,7 @@ export default function TranscriptList({
           >
             {item.text}
           </Typography>
-          {chatHistoryMap.has(index) && (
+          {chatLineIndices.has(index) && (
             <IconButton
               size="small"
               sx={{ mt: -0.5 }}
@@ -68,4 +69,6 @@ export default function TranscriptList({
       ))}
     </Box>
   );
-}
+});
+
+export default TranscriptList;

@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { useParams } from "react-router";
 import {
   Box,
@@ -21,6 +21,38 @@ import { useTextSelection } from "../hooks/useTextSelection";
 import { useTranslation } from "../hooks/useTranslation";
 import TranscriptList from "./TranscriptList";
 import AiChatModal from "../../ai-chat/components/AiChatModal";
+
+/** チャット履歴エントリ */
+interface ChatEntry {
+  messages: ChatMessage[];
+  lineIndex: number;
+  selectedText: string;
+  contextLines: TranscriptItem[];
+}
+
+/** chatEntryMapの複合キーを生成 */
+function makeChatKey(lineIndex: number, selectedText: string): string {
+  return `${lineIndex}:${selectedText}`;
+}
+
+/** AIチャットモーダルの状態 */
+interface AiChatState {
+  isOpen: boolean;
+  chatKey: string;
+  selectedText: string;
+  contextLines: TranscriptItem[];
+  existingHistory: ChatMessage[] | undefined;
+  lineIndex: number;
+}
+
+const INITIAL_AI_CHAT_STATE: AiChatState = {
+  isOpen: false,
+  chatKey: "",
+  selectedText: "",
+  contextLines: [],
+  existingHistory: undefined,
+  lineIndex: -1,
+};
 
 /** S-02 学習画面 */
 export default function LearningScreen() {
@@ -46,7 +78,7 @@ export default function LearningScreen() {
     selectedText,
     selectedLineIndex,
     anchorPosition,
-    contextLines,
+    contextLines: selectionContextLines,
     containerRef: transcriptContainerRef,
     handleMouseUp,
     clearSelection,
@@ -57,18 +89,25 @@ export default function LearningScreen() {
 
   // AIチャット状態
   const [apiKey, setApiKey] = useState("");
-  const [chatHistoryMap, setChatHistoryMap] = useState<
-    Map<number, ChatMessage[]>
-  >(new Map());
-  const [aiChatOpen, setAiChatOpen] = useState(false);
-  const [aiChatSelectedText, setAiChatSelectedText] = useState("");
-  const [aiChatContextLines, setAiChatContextLines] = useState<
-    TranscriptItem[]
-  >([]);
-  const [aiChatExistingHistory, setAiChatExistingHistory] = useState<
-    ChatMessage[] | undefined
-  >(undefined);
-  const [aiChatLineIndex, setAiChatLineIndex] = useState<number>(-1);
+  const [chatEntryMap, setChatEntryMap] = useState<Record<string, ChatEntry>>(
+    {}
+  );
+  const [aiChat, setAiChat] = useState<AiChatState>(INITIAL_AI_CHAT_STATE);
+
+  // chatEntryMap を ref で保持
+  const chatEntryMapRef = useRef(chatEntryMap);
+  useEffect(() => {
+    chatEntryMapRef.current = chatEntryMap;
+  }, [chatEntryMap]);
+
+  // TranscriptList用: どの行にチャット履歴があるか
+  const chatLineIndices = useMemo(() => {
+    const indices: Set<number> = new Set();
+    for (const entry of Object.values(chatEntryMap)) {
+      indices.add(entry.lineIndex);
+    }
+    return indices;
+  }, [chatEntryMap]);
 
   // 翻訳ボタン押下
   const handleTranslate = useCallback(() => {
@@ -81,58 +120,67 @@ export default function LearningScreen() {
   // AI質問ボタン押下
   const handleAskAi = useCallback(() => {
     if (selectedText && selectedLineIndex !== null) {
-      setAiChatSelectedText(selectedText);
-      setAiChatContextLines(contextLines);
-      setAiChatExistingHistory(undefined);
-      setAiChatLineIndex(selectedLineIndex);
-      setAiChatOpen(true);
+      const chatKey = makeChatKey(selectedLineIndex, selectedText);
+      const existing = chatEntryMapRef.current[chatKey];
+      setAiChat({
+        isOpen: true,
+        chatKey,
+        selectedText,
+        contextLines: selectionContextLines,
+        existingHistory: existing?.messages,
+        lineIndex: selectedLineIndex,
+      });
       clearSelection();
     }
-  }, [selectedText, selectedLineIndex, contextLines, clearSelection]);
+  }, [selectedText, selectedLineIndex, selectionContextLines, clearSelection]);
 
-  // ChatIcon タップ（履歴復元）
+  // ChatIcon タップ（該当行の最新の会話を復元）
   const handleChatIconClick = useCallback(
     (index: number) => {
       if (!transcript) return;
-      const history = chatHistoryMap.get(index);
-      const start = Math.max(0, index - 2);
-      const end = Math.min(transcript.length, index + 3);
+      // この行に紐づくエントリの中から最新を探す
+      const entries = Object.entries(chatEntryMapRef.current).filter(
+        ([, e]) => e.lineIndex === index
+      );
+      if (entries.length === 0) return;
+      // 最後に追加されたエントリを使う
+      const [chatKey, entry] = entries[entries.length - 1];
 
-      setAiChatSelectedText(transcript[index].text);
-      setAiChatContextLines(transcript.slice(start, end));
-      setAiChatExistingHistory(history);
-      setAiChatLineIndex(index);
-      setAiChatOpen(true);
+      setAiChat({
+        isOpen: true,
+        chatKey,
+        selectedText: entry.selectedText,
+        contextLines: entry.contextLines,
+        existingHistory: entry.messages,
+        lineIndex: index,
+      });
     },
-    [transcript, chatHistoryMap]
+    [transcript]
   );
 
   // AIチャットモーダルを閉じる
   const handleAiChatClose = useCallback(
     (messages: ChatMessage[]) => {
-      setAiChatOpen(false);
-      // チャット履歴を保存
-      if (messages.length > 0 && aiChatLineIndex >= 0) {
-        setChatHistoryMap((prev) => {
-          const next = new Map(prev);
-          next.set(aiChatLineIndex, messages);
-          return next;
-        });
+      if (messages.length > 0 && aiChat.chatKey) {
+        setChatEntryMap((prev) => ({
+          ...prev,
+          [aiChat.chatKey]: {
+            messages,
+            lineIndex: aiChat.lineIndex,
+            selectedText: aiChat.selectedText,
+            contextLines: aiChat.contextLines,
+          },
+        }));
       }
+      setAiChat(INITIAL_AI_CHAT_STATE);
     },
-    [aiChatLineIndex]
+    [aiChat.chatKey, aiChat.lineIndex, aiChat.selectedText, aiChat.contextLines]
   );
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* YouTubeプレーヤー */}
-      <Box
-        sx={{
-          height: 220,
-          bgcolor: "#1a1a1a",
-          flexShrink: 0,
-        }}
-      >
+      <Box sx={{ height: 220, bgcolor: "#1a1a1a", flexShrink: 0 }}>
         <Box ref={playerRef} sx={{ width: "100%", height: "100%" }} />
       </Box>
 
@@ -142,7 +190,6 @@ export default function LearningScreen() {
         onMouseUp={handleMouseUp}
         sx={{ flex: 1, overflow: "auto", position: "relative" }}
       >
-        {/* ローディング */}
         {loading && (
           <Box
             sx={{
@@ -156,7 +203,6 @@ export default function LearningScreen() {
           </Box>
         )}
 
-        {/* エラー */}
         {error && !loading && (
           <Box
             sx={{
@@ -171,19 +217,18 @@ export default function LearningScreen() {
           </Box>
         )}
 
-        {/* 字幕リスト */}
         {transcript && !loading && !error && (
           <TranscriptList
             transcript={transcript}
             activeIndex={activeIndex}
-            chatHistoryMap={chatHistoryMap}
+            chatLineIndices={chatLineIndices}
             onSeek={seekTo}
             onChatIconClick={handleChatIconClick}
             setLineRef={setLineRef}
           />
         )}
 
-        {/* テキスト選択時のアクションボタン（オーバーレイ） */}
+        {/* テキスト選択時のアクションボタン */}
         {selectedText && anchorPosition && (
           <Box
             sx={{
@@ -197,29 +242,17 @@ export default function LearningScreen() {
           >
             <Button
               size="small"
-              variant="outlined"
+              variant="contained"
               onClick={handleTranslate}
-              sx={{
-                minWidth: 0,
-                px: 1.5,
-                py: 0.25,
-                fontSize: "0.8rem",
-                bgcolor: "white",
-              }}
+              sx={{ minWidth: 0, px: 1.5, py: 0.25, fontSize: "0.8rem" }}
             >
               翻訳
             </Button>
             <Button
               size="small"
-              variant="outlined"
+              variant="contained"
               onClick={handleAskAi}
-              sx={{
-                minWidth: 0,
-                px: 1.5,
-                py: 0.25,
-                fontSize: "0.8rem",
-                bgcolor: "white",
-              }}
+              sx={{ minWidth: 0, px: 1.5, py: 0.25, fontSize: "0.8rem" }}
             >
               AI質問
             </Button>
@@ -232,25 +265,20 @@ export default function LearningScreen() {
             <Backdrop
               open
               onClick={closeTranslation}
-              sx={{
-                position: "absolute",
-                zIndex: 1,
-                bgcolor: "rgba(0,0,0,0.3)",
-              }}
+              sx={{ position: "fixed", zIndex: 10, bgcolor: "rgba(0,0,0,0.3)" }}
             />
             <Paper
-              elevation={4}
+              elevation={8}
               sx={{
-                position: "absolute",
-                top: "50%",
+                position: "fixed",
+                bottom: 16,
                 left: "50%",
-                transform: "translate(-50%, -50%)",
-                zIndex: 2,
-                width: "85%",
+                transform: "translateX(-50%)",
+                zIndex: 11,
+                width: "calc(100% - 32px)",
                 maxWidth: 360,
               }}
             >
-              {/* ヘッダー */}
               <Box
                 sx={{
                   display: "flex",
@@ -270,7 +298,6 @@ export default function LearningScreen() {
                   <CloseIcon fontSize="small" />
                 </IconButton>
               </Box>
-              {/* 翻訳結果 */}
               <Box sx={{ px: 2, py: 2 }}>
                 {translation.loading && <CircularProgress size={24} />}
                 {translation.error && (
@@ -287,11 +314,12 @@ export default function LearningScreen() {
 
       {/* AIチャットモーダル */}
       <AiChatModal
-        open={aiChatOpen}
+        key={aiChat.chatKey}
+        open={aiChat.isOpen}
         onClose={handleAiChatClose}
-        selectedText={aiChatSelectedText}
-        contextLines={aiChatContextLines}
-        existingHistory={aiChatExistingHistory}
+        selectedText={aiChat.selectedText}
+        contextLines={aiChat.contextLines}
+        existingHistory={aiChat.existingHistory}
         apiKey={apiKey}
         onApiKeyChange={setApiKey}
       />

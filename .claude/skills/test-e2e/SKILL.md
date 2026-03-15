@@ -152,7 +152,7 @@ npx playwright test --debug
 1. Playwright MCP の `browser_navigate` で対象画面を開く
 2. 主要な画面状態ごとにスクリーンショットを取得する
 3. キャプチャの保存ルール：
-   - **保存先:** `docs/designs/screens/captures/e2e/`
+   - **保存先:** `docs/designs/screens/captures/`
    - **ファイル名:** `{画面ID}_{連番}_{状態名}.png`
    - 例:
      - `S-01_01_initial.png`
@@ -171,4 +171,4 @@ npx playwright test --debug
 - [ ] `playwright.config.ts` が正しく設定されている
 - [ ] 全テストが通過している（`npx playwright test` で exit code 0）
 - [ ] 失敗テストがあれば原因調査・修正済み
-- [ ] 主要画面状態のキャプチャが `docs/designs/screens/captures/e2e/` に保存されている
+- [ ] 主要画面状態のキャプチャが `docs/designs/screens/captures/` に保存されている

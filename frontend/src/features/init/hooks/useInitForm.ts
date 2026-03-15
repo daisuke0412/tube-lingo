@@ -32,8 +32,8 @@ export function useInitForm() {
   const handleUrlChange = useCallback((value: string) => {
     setUrl(value);
     // 入力中はエラーをクリア
-    if (error) setError(null);
-  }, [error]);
+    setError(null);
+  }, []);
 
   return { url, error, handleUrlChange, handleSubmit };
 }

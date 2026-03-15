@@ -1,5 +1,8 @@
 import { useState, useCallback } from "react";
 
+const TRANSLATION_ERROR =
+  "翻訳に失敗しました。しばらく経ってから再試行してください";
+
 interface TranslationState {
   /** 翻訳対象のテキスト */
   word: string | null;
@@ -11,17 +14,19 @@ interface TranslationState {
   error: string | null;
 }
 
+const INITIAL_STATE: TranslationState = {
+  word: null,
+  result: null,
+  loading: false,
+  error: null,
+};
+
 /**
  * 翻訳 hook
  * MyMemory API を使って英語→日本語翻訳を行う
  */
 export function useTranslation() {
-  const [state, setState] = useState<TranslationState>({
-    word: null,
-    result: null,
-    loading: false,
-    error: null,
-  });
+  const [state, setState] = useState<TranslationState>(INITIAL_STATE);
 
   const translate = useCallback(async (text: string) => {
     setState({ word: text, result: null, loading: true, error: null });
@@ -32,22 +37,14 @@ export function useTranslation() {
       );
 
       if (!response.ok) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: "翻訳に失敗しました。しばらく経ってから再試行してください",
-        }));
+        setState((prev) => ({ ...prev, loading: false, error: TRANSLATION_ERROR }));
         return;
       }
 
       const data = await response.json();
 
-      if (data.responseStatus !== 200) {
-        setState((prev) => ({
-          ...prev,
-          loading: false,
-          error: "翻訳に失敗しました。しばらく経ってから再試行してください",
-        }));
+      if (data.responseStatus !== 200 || !data.responseData?.translatedText) {
+        setState((prev) => ({ ...prev, loading: false, error: TRANSLATION_ERROR }));
         return;
       }
 
@@ -57,16 +54,12 @@ export function useTranslation() {
         loading: false,
       }));
     } catch {
-      setState((prev) => ({
-        ...prev,
-        loading: false,
-        error: "翻訳に失敗しました。しばらく経ってから再試行してください",
-      }));
+      setState((prev) => ({ ...prev, loading: false, error: TRANSLATION_ERROR }));
     }
   }, []);
 
   const closeTranslation = useCallback(() => {
-    setState({ word: null, result: null, loading: false, error: null });
+    setState(INITIAL_STATE);
   }, []);
 
   return { translation: state, translate, closeTranslation };

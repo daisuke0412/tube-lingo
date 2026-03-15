@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Backdrop,
+  CircularProgress,
   IconButton,
   Paper,
   TextField,
@@ -36,7 +37,7 @@ export default function AiChatModal({
   apiKey,
   onApiKeyChange,
 }: AiChatModalProps) {
-  const { chatMessages, isStreaming, error, sendMessage, sendInitialMessage } =
+  const { chatMessages, isLoading, error, sendMessage, sendInitialMessage } =
     useAiChat(selectedText, contextLines, existingHistory);
 
   const [input, setInput] = useState("");
@@ -46,13 +47,15 @@ export default function AiChatModal({
   // APIキーのバリデーション
   const isApiKeyValid = /^sk-ant-/.test(localApiKey);
 
-  // チャットが既にある場合（履歴復元 or APIキー入力済み）
-  const hasChat = chatMessages.length > 0 || existingHistory?.length;
+  // チャットメッセージが存在するか（送信後 or 履歴復元）
+  const hasChat = chatMessages.length > 0;
 
-  // メッセージ更新時に下までスクロール
+  // メッセージ数が増えたときのみスクロール
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+    if (chatMessages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages.length]);
 
   // APIキー送信 → 初回質問
   const handleApiKeySubmit = useCallback(() => {
@@ -64,10 +67,10 @@ export default function AiChatModal({
   // 追加質問送信
   const handleSendMessage = useCallback(() => {
     const text = input.trim();
-    if (!text || isStreaming) return;
+    if (!text || isLoading) return;
     setInput("");
     sendMessage(text, apiKey || localApiKey);
-  }, [input, isStreaming, sendMessage, apiKey, localApiKey]);
+  }, [input, isLoading, sendMessage, apiKey, localApiKey]);
 
   // ✕ボタン
   const handleClose = useCallback(() => {
@@ -128,8 +131,8 @@ export default function AiChatModal({
           </IconButton>
         </Box>
 
-        {/* APIキー入力（未設定時） */}
-        {!hasChat && !apiKey && (
+        {/* APIキー入力（新規質問時） */}
+        {!hasChat && (
           <Box
             sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}
           >
@@ -148,7 +151,7 @@ export default function AiChatModal({
             <Button
               variant="contained"
               fullWidth
-              disabled={!isApiKeyValid || isStreaming}
+              disabled={!isApiKeyValid || isLoading}
               onClick={handleApiKeySubmit}
             >
               AIに質問する
@@ -157,7 +160,7 @@ export default function AiChatModal({
         )}
 
         {/* チャット表示 */}
-        {(hasChat || apiKey) && (
+        {hasChat && (
           <>
             {/* メッセージ一覧 */}
             <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
@@ -196,6 +199,13 @@ export default function AiChatModal({
                 </Box>
               ))}
 
+              {/* ローディングスピナー */}
+              {isLoading && (
+                <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 1.5 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              )}
+
               {/* エラーメッセージ */}
               {error && (
                 <Box sx={{ mb: 1.5 }}>
@@ -231,12 +241,12 @@ export default function AiChatModal({
                     handleSendMessage();
                   }
                 }}
-                disabled={isStreaming}
+                disabled={isLoading}
               />
               <IconButton
                 color="primary"
                 onClick={handleSendMessage}
-                disabled={!input.trim() || isStreaming}
+                disabled={!input.trim() || isLoading}
               >
                 <SendIcon />
               </IconButton>

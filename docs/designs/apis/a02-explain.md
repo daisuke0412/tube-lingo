@@ -3,7 +3,7 @@
 | 項目 | 内容 |
 |---|---|
 | API ID | A-02 |
-| API名 | AI解説（SSEストリーミング） |
+| API名 | AI解説 |
 | エンドポイント | `POST /api/explain` |
 | 関連機能 | F-06, F-07 |
 | 関連画面 | S-02-M AIチャットモーダル |
@@ -47,7 +47,7 @@
   "user_message": "もっと簡単に説明してください。",
   "chat_history": [
     { "role": "user", "content": "「photosynthesis」について解説してください。" },
-    { "role": "assistant", "content": "翻訳: 光合成\n\n解説: これは植物が太陽光をエネルギーに変える仕組みについて説明している場面です。..." }
+    { "role": "assistant", "content": "翻訳:\n光合成\n\n解説:\nこれは植物が太陽光をエネルギーに変える仕組みについて説明している場面です。..." }
   ]
 }
 ```
@@ -80,27 +80,19 @@
 
 ## レスポンス
 
-### 成功時 `200 OK`（SSE ストリーミング）
+### 成功時 `200 OK`（JSON）
 
-```
-Content-Type: text/event-stream
-
-data: 光合成
-
-data: とは、
-
-data: 植物が太陽光を
-
-data: 使ってエネルギーを作り出す
-
-data: 仕組みです。
-
-data: [DONE]
+```json
+{
+  "content": "翻訳:\n光合成\n\n解説:\nこれは植物が太陽光をエネルギーに変える仕組みについて説明している場面です。前の字幕で植物の成長に光が必要と述べており、その仕組みの名称として photosynthesis を導入しています。"
+}
 ```
 
-- 各 `data:` はトークン単位またはチャンク単位のテキスト断片
-- `data: [DONE]` でストリーム終了を通知する
-- クライアントは受信するたびにチャット欄へ追記表示する
+### レスポンス型定義
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `content` | `string` | AIの回答テキスト |
 
 ---
 
@@ -137,15 +129,14 @@ data: [DONE]
        └─ 非空（追加質問）
            [service] システムプロンプトを構築する → docs/designs/prompts/p02-explain-followup.md
            [service] messages = chat_history 全件 + {"role": "user", "content": user_message}
-5. [service] Anthropic SDK (stream=True) で claude-sonnet 系モデルを呼び出す
+5. [service] Anthropic SDK で claude-sonnet 系モデルを呼び出す
              引数: system=システムプロンプト, messages=messages配列
              ├── 認証エラー → INVALID_API_KEY (401)
              ├── レート制限 → RATE_LIMIT (429)
              └── その他エラー → CLAUDE_ERROR (502)
-6. [service] ストリームのチャンクを SSE 形式（data: <text>\n\n）に変換しながら yield する
-7. [service] ストリーム完了後に data: [DONE]\n\n を送信する
-8. [router] StreamingResponse として返却する
-9. API キーはリクエスト処理後にスコープを外れ破棄される（メモリにも残さない）
+6. [service] レスポンスからテキストを取得し返却する
+7. [router] JSON レスポンスとして返却する
+8. API キーはリクエスト処理後にスコープを外れ破棄される（メモリにも残さない）
 ```
 
 ---
@@ -161,5 +152,5 @@ data: [DONE]
 ## 備考
 
 - 使用モデルは `claude-sonnet` 系の最新モデル（`docs/guides/guides.md` の AIモデル設定に従う）
-- `context_lines` は字幕の前後 1〜2 行を含めた 3〜5 行を推奨（コンテキスト品質とトークンコストのバランス）
+- `context_lines` は字幕の前後 5 行を含めた 11 行
 - トークン消費目安: 1回の質問あたり 入力〜500 tok / 出力〜300 tok（合計 $0.005〜$0.01 程度）

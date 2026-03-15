@@ -1,7 +1,6 @@
-"""AI解説サービス（SSEストリーミング）"""
+"""AI解説サービス"""
 
 from pathlib import Path
-from typing import AsyncGenerator
 
 import anthropic
 from fastapi import HTTPException
@@ -21,7 +20,7 @@ def _load_prompt(filename: str) -> str:
 
 
 def _build_context_text(request: ExplainRequest) -> str:
-    """context_lines を整形テキストに変換する（P-01設計書の形式）"""
+    """context_lines を整形テキストに変換する"""
     return "\n".join(
         f"[{item.start:.1f}s] {item.text}" for item in request.context_lines
     )
@@ -41,11 +40,9 @@ def _build_followup_system_prompt() -> str:
     return _load_prompt("explain_followup.txt")
 
 
-async def stream_explanation(
-    request: ExplainRequest, api_key: str
-) -> AsyncGenerator[str, None]:
+def get_explanation(request: ExplainRequest, api_key: str) -> str:
     """
-    Anthropic SDK でストリーミング呼び出しを行い SSE 形式で yield する。
+    Anthropic SDK で呼び出しを行い、回答テキストを返す。
     APIキーはこの関数のスコープ内のみで使用し、関数終了後に破棄される。
     """
     # chat_history の有無で分岐
@@ -62,19 +59,16 @@ async def stream_explanation(
         ] + [{"role": "user", "content": request.user_message}]
 
     try:
-        # リクエストごとにクライアントを生成し、スコープを限定する
         client = anthropic.Anthropic(api_key=api_key)
 
-        with client.messages.stream(
+        response = client.messages.create(
             model=_MODEL,
             max_tokens=1024,
             system=system_prompt,
             messages=messages,
-        ) as stream:
-            for text in stream.text_stream:
-                yield f"data: {text}\n\n"
+        )
 
-        yield "data: [DONE]\n\n"
+        return response.content[0].text
 
     except anthropic.AuthenticationError:
         raise HTTPException(status_code=401, detail="INVALID_API_KEY")
@@ -83,5 +77,4 @@ async def stream_explanation(
     except anthropic.APIError:
         raise HTTPException(status_code=502, detail="CLAUDE_ERROR")
     finally:
-        # api_key がスコープを外れることを明示
         del api_key

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { TranscriptItem } from "../../../shared/types";
+import { getContextLines } from "../../../shared/lib/transcript";
 
 interface SelectionState {
   /** 選択されたテキスト */
@@ -26,12 +27,25 @@ export function useTextSelection(transcript: TranscriptItem[] | null) {
   const containerRef = useRef<HTMLElement>(null);
 
   const handleMouseUp = useCallback(() => {
-    const selection = window.getSelection();
-    const text = selection?.toString().trim();
+    // 少し遅延させて、ボタンクリック時のmouseupで誤クリアしないようにする
+    requestAnimationFrame(() => {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
 
-    if (!text || !selection || !containerRef.current || !transcript) {
-      return;
-    }
+      // 選択テキストがなければクリア
+      if (!text) {
+        setState({
+          selectedText: null,
+          selectedLineIndex: null,
+          anchorPosition: null,
+          contextLines: [],
+        });
+        return;
+      }
+
+      if (!selection || !containerRef.current || !transcript) {
+        return;
+      }
 
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
@@ -47,19 +61,18 @@ export function useTextSelection(transcript: TranscriptItem[] | null) {
 
     if (lineIndex === -1) return;
 
-    // コンテキスト行（前後2行）を算出
-    const start = Math.max(0, lineIndex - 2);
-    const end = Math.min(transcript.length, lineIndex + 3);
-    const contextLines = transcript.slice(start, end);
+    // コンテキスト行（前後5行）を算出
+    const contextLines = getContextLines(transcript, lineIndex);
 
     setState({
       selectedText: text,
       selectedLineIndex: lineIndex,
       anchorPosition: {
-        top: rect.top - containerRect.top,
-        left: rect.left - containerRect.left,
+        top: rect.top - containerRect.top + containerRef.current.scrollTop,
+        left: rect.left - containerRect.left + containerRef.current.scrollLeft,
       },
       contextLines,
+    });
     });
   }, [transcript]);
 
