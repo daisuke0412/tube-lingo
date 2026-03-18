@@ -1,5 +1,5 @@
 ---
-name: dev_api
+name: dev-api
 description: FastAPI バックエンド実装スキル。API設計書・プロンプト設計書に基づき、routers・services を実装する。「APIを実装して」「バックエンドを作って」「FastAPIを実装して」と言われた場合に使用する。
 ---
 
