@@ -29,6 +29,34 @@ graph LR
     class YouTube,Claude external
 :::
 
+### MCPサーバ アーキテクチャ
+
+::: mermaid
+graph LR
+    Client[MCPクライアント<br/>Claude Desktop / Claude Code等] -->|MCP Protocol<br/>stdio| MCPServer
+
+    subgraph MCPServer["mcp-server (Python)"]
+        Server[MCP Server]
+        Tool1["get_transcript<br/>YouTube字幕取得ツール"]
+        Server --> Tool1
+    end
+
+    Tool1 -->|youtube-transcript-api| YouTube[YouTube字幕]
+
+    classDef mcp fill:#e3f2fd,stroke:#1565c0
+    classDef backend fill:#fce4ec,stroke:#c2185b
+    classDef external fill:#fff3e0,stroke:#f57c00
+    classDef client fill:#f3e5f5,stroke:#7b1fa2
+
+    class Server,Tool1 mcp
+    class Router,Service backend
+    class YouTube external
+    class Client client
+:::
+
+> MCPサーバは `backend/` の字幕取得ロジックと同じ `youtube-transcript-api` を使用するが、
+> 独立したプロセスとして動作する。MCPクライアント（Claude Desktop等）から stdio トランスポートで接続する。
+
 ## アプリのディレクトリ構成イメージ
 
 ```
@@ -72,6 +100,11 @@ tube-lingo/
 │       └── prompts/                  # プロンプトテンプレート
 │           ├── explain_initial.txt   # P-01 初回解説プロンプト
 │           └── explain_followup.txt  # P-02 追加質問プロンプト
+├── mcp-server/                      # MCPサーバ (Python)
+│   ├── requirements.txt              # 依存パッケージ
+│   ├── server.py                     # MCPサーバ エントリポイント
+│   └── tools/
+│       └── transcript.py             # get_transcript ツール実装
 ├── docs/
 │   ├── requirements/
 │   │   └── requirements.md           # アプリ概要・機能要件・MVP範囲
@@ -111,6 +144,16 @@ tube-lingo/
 | Anthropic Python SDK | 0.49+ |
 | Claude API (`claude-sonnet系`) | - |
 | youtube-transcript-api | 1.2+ |
+
+### MCPサーバ
+
+| 技術 | バージョン |
+|---|---|
+| Python | 3.12+ |
+| mcp (Python SDK) | 1.x |
+| youtube-transcript-api | 1.2+ |
+
+> トランスポートは **stdio** を使用。Claude Desktop / Claude Code の MCP設定で `mcp-server/server.py` を指定して接続する。
 
 
 ## コーディング規約

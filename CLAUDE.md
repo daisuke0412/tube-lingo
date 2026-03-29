@@ -27,6 +27,7 @@ Claude Codeへの行動指示とドキュメントのナビゲーション。
 | `dev_screen-mock` | 画面モック実装。設計書のASCIIアートを元に見た目のみ作成・キャプチャ取得 |
 | `dev_screen-logic` | 画面ロジック実装。モック済み画面に状態管理・API連携を組み込む |
 | `dev_api` | FastAPIバックエンド実装。routers・services・プロンプトを実装 |
+| `test_e2e` | PlayWirhgtを使ったE2Eテストを実行 |
 
 ---
 
