@@ -8,6 +8,11 @@
         "--headless"
       ],
       "env": {}
+    },
+    "tube-lingo": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["c:/Users/岸本大典/git/tube-lingo/mcp-server/server.py"]
     }
   }
 }
