@@ -120,16 +120,10 @@ export default function InitScreenMock() {
             AI質問機能はClaude (Anthropic) を使用します。モデルはSonnet系です
           </Typography>
           <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-            APIキーはご自身で取得・ご用意ください
-          </Typography>
-          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
             トークン消費はAI質問のみです。翻訳機能はトークン不要です
           </Typography>
-          <Typography component="li" variant="body2" sx={{ mb: 0.5 }}>
-            トークンの消費目安は$5 ≒ 約500〜1000回です（Sonnet / 2026-03-15 時点）
-          </Typography>
           <Typography component="li" variant="body2">
-            APIキーはメモリ上にのみ保持し、サーバー・ブラウザのストレージには一切保存されません
+            トークンの消費目安は$5 ≒ 約500〜1000回です（Sonnet / 2026-03-15 時点）
           </Typography>
         </Box>
       </Box>

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import type { TranscriptItem, ChatMessage } from "../../../shared/types";
 
 const AI_ERROR_MESSAGES: Record<number, string> = {
-  401: "APIキーが無効です。正しいキーを入力してください",
+  401: "AIサービスの認証に失敗しました。管理者にお問い合わせください",
   429: "リクエストが多すぎます。しばらく待ってからお試しください",
 };
 const DEFAULT_ERROR = "AIとの通信に失敗しました。しばらく経ってから再試行してください";
@@ -50,7 +50,7 @@ export function useAiChat(
 
   /** AI解説APIを呼び出す */
   const sendMessage = useCallback(
-    async (userMessage: string, apiKey: string) => {
+    async (userMessage: string) => {
       setError(null);
       setIsLoading(true);
 
@@ -70,7 +70,6 @@ export function useAiChat(
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "x-api-key": apiKey,
           },
           body: JSON.stringify({
             selected_text: selectedText,
@@ -104,15 +103,12 @@ export function useAiChat(
   );
 
   /** 初回質問を自動送信 */
-  const sendInitialMessage = useCallback(
-    (apiKey: string) => {
-      if (initialSent) return;
-      setInitialSent(true);
-      const message = `「${selectedText}」について解説してください。`;
-      sendMessage(message, apiKey);
-    },
-    [selectedText, sendMessage, initialSent]
-  );
+  const sendInitialMessage = useCallback(() => {
+    if (initialSent) return;
+    setInitialSent(true);
+    const message = `「${selectedText}」について解説してください。`;
+    sendMessage(message);
+  }, [selectedText, sendMessage, initialSent]);
 
   return {
     chatMessages,

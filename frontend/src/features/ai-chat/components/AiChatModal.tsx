@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import {
   Box,
-  Button,
   Backdrop,
   CircularProgress,
   IconButton,
@@ -23,8 +22,6 @@ interface AiChatModalProps {
   selectedText: string;
   contextLines: TranscriptItem[];
   existingHistory?: ChatMessage[];
-  apiKey: string;
-  onApiKeyChange: (key: string) => void;
 }
 
 /** S-02-M AIチャットモーダル */
@@ -34,21 +31,19 @@ export default function AiChatModal({
   selectedText,
   contextLines,
   existingHistory,
-  apiKey,
-  onApiKeyChange,
 }: AiChatModalProps) {
   const { chatMessages, isLoading, error, sendMessage, sendInitialMessage } =
     useAiChat(selectedText, contextLines, existingHistory);
 
   const [input, setInput] = useState("");
-  const [localApiKey, setLocalApiKey] = useState(apiKey);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // APIキーのバリデーション
-  const isApiKeyValid = /^sk-ant-/.test(localApiKey);
-
-  // チャットメッセージが存在するか（送信後 or 履歴復元）
-  const hasChat = chatMessages.length > 0;
+  // モーダルopen時に初回質問を自動送信
+  useEffect(() => {
+    if (open) {
+      sendInitialMessage();
+    }
+  }, [open, sendInitialMessage]);
 
   // メッセージ数が増えたときのみスクロール
   useEffect(() => {
@@ -57,20 +52,13 @@ export default function AiChatModal({
     }
   }, [chatMessages.length]);
 
-  // APIキー送信 → 初回質問
-  const handleApiKeySubmit = useCallback(() => {
-    if (!isApiKeyValid) return;
-    onApiKeyChange(localApiKey);
-    sendInitialMessage(localApiKey);
-  }, [localApiKey, isApiKeyValid, onApiKeyChange, sendInitialMessage]);
-
   // 追加質問送信
   const handleSendMessage = useCallback(() => {
     const text = input.trim();
     if (!text || isLoading) return;
     setInput("");
-    sendMessage(text, apiKey || localApiKey);
-  }, [input, isLoading, sendMessage, apiKey, localApiKey]);
+    sendMessage(text);
+  }, [input, isLoading, sendMessage]);
 
   // ✕ボタン
   const handleClose = useCallback(() => {
@@ -131,37 +119,8 @@ export default function AiChatModal({
           </IconButton>
         </Box>
 
-        {/* APIキー入力（新規質問時） */}
-        {!hasChat && (
-          <Box
-            sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}
-          >
-            <TextField
-              fullWidth
-              label="Anthropic APIキー"
-              placeholder="sk-ant-..."
-              size="small"
-              type="password"
-              value={localApiKey}
-              onChange={(e) => setLocalApiKey(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleApiKeySubmit();
-              }}
-            />
-            <Button
-              variant="contained"
-              fullWidth
-              disabled={!isApiKeyValid || isLoading}
-              onClick={handleApiKeySubmit}
-            >
-              AIに質問する
-            </Button>
-          </Box>
-        )}
-
         {/* チャット表示 */}
-        {hasChat && (
-          <>
+        <>
             {/* メッセージ一覧 */}
             <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
               {chatMessages.map((msg, index) => (
@@ -252,7 +211,6 @@ export default function AiChatModal({
               </IconButton>
             </Box>
           </>
-        )}
       </Paper>
     </>
   );
