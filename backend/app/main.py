@@ -1,5 +1,11 @@
 """FastAPI アプリ定義・CORS設定・ルーター登録"""
 
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv(Path(__file__).parent.parent / ".env")
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,7 +20,7 @@ app.add_middleware(
     allow_origins=CORS_ORIGINS,
     allow_credentials=False,
     allow_methods=["GET", "POST"],
-    allow_headers=["Content-Type", "x-api-key"],
+    allow_headers=["Content-Type"],
 )
 
 # ルーター登録

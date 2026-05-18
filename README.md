@@ -10,7 +10,7 @@ YouTube の英語動画で英語学習ができる Web アプリ。
 - テキスト選択で Claude による文脈を踏まえた AI 解説
 - AI チャットで追加質問が可能
 
-> ユーザー自身の Anthropic API キーが必要です（アプリ内で入力、メモリ上のみ保持）。
+> サーバーに `ANTHROPIC_API_KEY` 環境変数の設定が必要です（`backend/.env.example` を参照）。
 
 ---
 

@@ -40,11 +40,8 @@ def _build_followup_system_prompt() -> str:
     return _load_prompt("explain_followup.txt")
 
 
-def get_explanation(request: ExplainRequest, api_key: str) -> str:
-    """
-    Anthropic SDK で呼び出しを行い、回答テキストを返す。
-    APIキーはこの関数のスコープ内のみで使用し、関数終了後に破棄される。
-    """
+def get_explanation(request: ExplainRequest) -> str:
+    """Anthropic SDK で呼び出しを行い、回答テキストを返す。"""
     # chat_history の有無で分岐
     if not request.chat_history:
         # 初回: P-01プロンプト
@@ -59,7 +56,7 @@ def get_explanation(request: ExplainRequest, api_key: str) -> str:
         ] + [{"role": "user", "content": request.user_message}]
 
     try:
-        client = anthropic.Anthropic(api_key=api_key)
+        client = anthropic.Anthropic()
 
         response = client.messages.create(
             model=_MODEL,
@@ -76,5 +73,3 @@ def get_explanation(request: ExplainRequest, api_key: str) -> str:
         raise HTTPException(status_code=429, detail="RATE_LIMIT")
     except anthropic.APIError:
         raise HTTPException(status_code=502, detail="CLAUDE_ERROR")
-    finally:
-        del api_key

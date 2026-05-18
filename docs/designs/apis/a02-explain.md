@@ -17,7 +17,6 @@
 | ヘッダー | 必須 | 説明 |
 |---|---|---|
 | `Content-Type` | ✅ | `application/json` |
-| `x-api-key` | ✅ | ユーザーの Anthropic API キー（`sk-ant-` で始まる） |
 
 ### ボディ（初回）
 
@@ -101,7 +100,7 @@
 | HTTPステータス | エラーコード | 発生条件 |
 |---|---|---|
 | `400 Bad Request` | `INVALID_REQUEST` | ボディの必須フィールド欠損・型不正 |
-| `401 Unauthorized` | `INVALID_API_KEY` | `x-api-key` が不正または未設定 |
+| `401 Unauthorized` | `INVALID_API_KEY` | サーバーの `ANTHROPIC_API_KEY` 環境変数が不正または未設定 |
 | `429 Too Many Requests` | `RATE_LIMIT` | Anthropic API のレート制限超過 |
 | `502 Bad Gateway` | `CLAUDE_ERROR` | Anthropic API 側のエラー |
 
@@ -116,10 +115,9 @@
 ## 処理フロー
 
 ```
-1. リクエストヘッダーから x-api-key を取得する
-2. ボディの selected_text / context_lines / user_message / chat_history を受け取る
-3. [router] バリデーション後、services/explain.py へ渡す
-4. [service] chat_history が空配列かどうかで分岐する
+1. ボディの selected_text / context_lines / user_message / chat_history を受け取る
+2. [router] バリデーション後、services/explain.py へ渡す
+3. [service] chat_history が空配列かどうかで分岐する
        │
        ├─ 空（初回）
        │   [service] システムプロンプトを構築する → docs/designs/prompts/p01-explain-initial.md
@@ -129,23 +127,22 @@
        └─ 非空（追加質問）
            [service] システムプロンプトを構築する → docs/designs/prompts/p02-explain-followup.md
            [service] messages = chat_history 全件 + {"role": "user", "content": user_message}
-5. [service] Anthropic SDK で claude-sonnet 系モデルを呼び出す
+4. [service] Anthropic SDK で claude-sonnet 系モデルを呼び出す（環境変数 ANTHROPIC_API_KEY を使用）
              引数: system=システムプロンプト, messages=messages配列
              ├── 認証エラー → INVALID_API_KEY (401)
              ├── レート制限 → RATE_LIMIT (429)
              └── その他エラー → CLAUDE_ERROR (502)
-6. [service] レスポンスからテキストを取得し返却する
-7. [router] JSON レスポンスとして返却する
-8. API キーはリクエスト処理後にスコープを外れ破棄される（メモリにも残さない）
+5. [service] レスポンスからテキストを取得し返却する
+6. [router] JSON レスポンスとして返却する
 ```
 
 ---
 
 ## セキュリティ
 
-- `x-api-key` はリクエスト処理中のみメモリ上で使用し、ログ・DB・ファイルには一切出力しない
-- サーバー側でキーを保持・キャッシュしない
-- Claude への呼び出しはユーザーのキーで都度認証する
+- `ANTHROPIC_API_KEY` はサーバーの環境変数として管理する
+- ログ・DB・ファイルには一切出力しない
+- `.env` ファイルに設定し、`.gitignore` で除外する
 
 ---
 

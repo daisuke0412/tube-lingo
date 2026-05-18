@@ -88,7 +88,6 @@ export default function LearningScreen() {
   const { translation, translate, closeTranslation } = useTranslation();
 
   // AIチャット状態
-  const [apiKey, setApiKey] = useState("");
   const [chatEntryMap, setChatEntryMap] = useState<Record<string, ChatEntry>>(
     {}
   );
@@ -320,8 +319,6 @@ export default function LearningScreen() {
         selectedText={aiChat.selectedText}
         contextLines={aiChat.contextLines}
         existingHistory={aiChat.existingHistory}
-        apiKey={apiKey}
-        onApiKeyChange={setApiKey}
       />
     </Box>
   );

@@ -12,6 +12,10 @@ const MOCK_TRANSCRIPT = {
   ],
 };
 
+const MOCK_EXPLAIN_RESPONSE = {
+  content: "光合成とは植物が光を使う仕組みです。",
+};
+
 /** テキスト選択 → AI質問ボタンクリック でモーダルを開くヘルパー */
 async function openAiChatModal(page: import("@playwright/test").Page) {
   await page.route("**/api/transcript*", (route) =>
@@ -45,119 +49,77 @@ async function openAiChatModal(page: import("@playwright/test").Page) {
 }
 
 test.describe("S-02-M AIチャットモーダル", () => {
-  test("APIキー未入力時: APIキー入力欄と「AIに質問する」ボタン（disabled）が表示される", async ({
+  test("AI回答: チャット欄に表示される", async ({
     page,
   }) => {
-    await openAiChatModal(page);
-
-    // APIキー入力欄が表示される
-    await expect(page.getByLabel("Anthropic APIキー")).toBeVisible({
-      timeout: 5000,
-    });
-
-    // 「AIに質問する」ボタンがdisabled
-    await expect(
-      page.getByRole("button", { name: "AIに質問する" })
-    ).toBeDisabled();
-  });
-
-  test("APIキー入力（不正形式）: 「AIに質問する」ボタンがdisabledのまま", async ({
-    page,
-  }) => {
-    await openAiChatModal(page);
-
-    await page.getByLabel("Anthropic APIキー").fill("invalid-key");
-
-    await expect(
-      page.getByRole("button", { name: "AIに質問する" })
-    ).toBeDisabled();
-  });
-
-  test("APIキー入力（sk-ant-形式）: 「AIに質問する」ボタンが有効化される", async ({
-    page,
-  }) => {
-    await openAiChatModal(page);
-
-    await page.getByLabel("Anthropic APIキー").fill("sk-ant-test-key-123");
-
-    await expect(
-      page.getByRole("button", { name: "AIに質問する" })
-    ).toBeEnabled();
-  });
-
-  test("AI回答のSSEストリーミング: チャット欄にリアルタイム表示される", async ({
-    page,
-  }) => {
-    await openAiChatModal(page);
-
-    // SSEレスポンスをモック
-    await page.route("**/api/explain", (route) => {
-      const body = "data: 光合成\n\ndata: とは植物が\n\ndata: 光を使う仕組みです。\n\ndata: [DONE]\n\n";
+    // モーダルopen時に自動でAPI呼び出しが走るため、先にモックを設定
+    await page.route("**/api/explain", (route) =>
       route.fulfill({
         status: 200,
-        headers: { "Content-Type": "text/event-stream" },
-        body,
-      });
-    });
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_EXPLAIN_RESPONSE),
+      })
+    );
 
-    await page.getByLabel("Anthropic APIキー").fill("sk-ant-test-key-123");
-    await page.getByRole("button", { name: "AIに質問する" }).click();
+    await openAiChatModal(page);
 
-    // ストリーミング結果が表示される
+    // 回答が表示される
     await expect(
       page.getByText("光合成とは植物が光を使う仕組みです。")
     ).toBeVisible({ timeout: 10000 });
   });
 
-  test("ストリーミング中: 入力欄・送信ボタンがdisabled", async ({
+  test("ローディング中: 入力欄・送信ボタンがdisabled", async ({
     page,
   }) => {
-    await openAiChatModal(page);
-
-    // SSEレスポンスを遅延モック
+    // 遅延レスポンスをモック
     await page.route("**/api/explain", async (route) => {
       await new Promise((r) => setTimeout(r, 2000));
-      const body = "data: テスト回答\n\ndata: [DONE]\n\n";
       await route.fulfill({
         status: 200,
-        headers: { "Content-Type": "text/event-stream" },
-        body,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_EXPLAIN_RESPONSE),
       });
     });
 
-    await page.getByLabel("Anthropic APIキー").fill("sk-ant-test-key-123");
-    await page.getByRole("button", { name: "AIに質問する" }).click();
+    await openAiChatModal(page);
 
-    // ストリーミング中は入力欄がdisabled
+    // ローディング中は入力欄がdisabled
     await expect(
       page.getByPlaceholder("追加で質問する...")
     ).toBeDisabled({ timeout: 3000 });
   });
 
   test("✕ボタン押下: モーダルが閉じる", async ({ page }) => {
+    // モック設定
+    await page.route("**/api/explain", (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_EXPLAIN_RESPONSE),
+      })
+    );
+
     await openAiChatModal(page);
 
-    // APIキー入力欄が表示されていることを確認
-    await expect(page.getByLabel("Anthropic APIキー")).toBeVisible({
+    // 選択テキストがヘッダーに表示されていることを確認
+    await expect(page.getByText('"Photosynthesis"')).toBeVisible({
       timeout: 5000,
     });
 
-    // ✕ボタンをクリック（CloseIconのボタン）
-    // ヘッダー内の閉じるボタンを取得
+    // ✕ボタンをクリック
     const closeButton = page.locator("button").filter({ has: page.locator("svg[data-testid='CloseIcon']") });
     await closeButton.click();
 
-    // モーダルが閉じたことを確認
-    await expect(page.getByLabel("Anthropic APIキー")).toBeHidden({
+    // モーダルが閉じたことを確認（選択テキストのヘッダーが非表示）
+    await expect(page.getByText('"Photosynthesis"')).toBeHidden({
       timeout: 3000,
     });
   });
 
-  test("API呼び出し失敗（401）: 「APIキーが無効です...」が表示される", async ({
+  test("API呼び出し失敗（401）: 認証エラーメッセージが表示される", async ({
     page,
   }) => {
-    await openAiChatModal(page);
-
     // 401エラーをモック
     await page.route("**/api/explain", (route) =>
       route.fulfill({
@@ -167,11 +129,10 @@ test.describe("S-02-M AIチャットモーダル", () => {
       })
     );
 
-    await page.getByLabel("Anthropic APIキー").fill("sk-ant-invalid-key");
-    await page.getByRole("button", { name: "AIに質問する" }).click();
+    await openAiChatModal(page);
 
     await expect(
-      page.getByText("APIキーが無効です。正しいキーを入力してください")
+      page.getByText("AIサービスの認証に失敗しました。管理者にお問い合わせください")
     ).toBeVisible({ timeout: 10000 });
   });
 });

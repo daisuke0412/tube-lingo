@@ -1,7 +1,5 @@
-import { useState } from "react";
 import {
   Box,
-  Button,
   IconButton,
   Paper,
   TextField,
@@ -12,8 +10,6 @@ import {
   Close as CloseIcon,
   Send as SendIcon,
 } from "@mui/icons-material";
-
-type Pattern = "apiKey" | "chat";
 
 /** ダミーチャット履歴 */
 const DUMMY_CHAT = [
@@ -39,8 +35,6 @@ const DUMMY_CHAT = [
 
 /** S-02-M AIチャットモーダルモック */
 export default function AiChatModalMock() {
-  const [pattern, setPattern] = useState<Pattern>("apiKey");
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* YouTubeプレーヤー領域（プレースホルダー） */}
@@ -101,113 +95,68 @@ export default function AiChatModalMock() {
             </IconButton>
           </Box>
 
-          {/* APIキー入力パターン */}
-          {pattern === "apiKey" && (
-            <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
-              <TextField
-                fullWidth
-                label="Anthropic APIキー"
-                placeholder="sk-ant-..."
-                size="small"
-                type="password"
-              />
-              <Button variant="contained" fullWidth>
-                AIに質問する
-              </Button>
-            </Box>
-          )}
-
-          {/* チャット表示パターン */}
-          {pattern === "chat" && (
-            <>
-              {/* メッセージ一覧 */}
-              <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
-                {DUMMY_CHAT.map((msg, index) => (
-                  <Box
-                    key={index}
+          {/* チャット表示 */}
+          <>
+            {/* メッセージ一覧 */}
+            <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
+              {DUMMY_CHAT.map((msg, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    justifyContent:
+                      msg.role === "user" ? "flex-end" : "flex-start",
+                    mb: 1.5,
+                  }}
+                >
+                  <Paper
+                    elevation={0}
                     sx={{
-                      display: "flex",
-                      justifyContent:
-                        msg.role === "user" ? "flex-end" : "flex-start",
-                      mb: 1.5,
+                      px: 2,
+                      py: 1,
+                      maxWidth: "85%",
+                      borderRadius: 2,
+                      bgcolor:
+                        msg.role === "user"
+                          ? "primary.main"
+                          : "grey.100",
+                      color:
+                        msg.role === "user" ? "primary.contrastText" : "text.primary",
                     }}
                   >
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        px: 2,
-                        py: 1,
-                        maxWidth: "85%",
-                        borderRadius: 2,
-                        bgcolor:
-                          msg.role === "user"
-                            ? "primary.main"
-                            : "grey.100",
-                        color:
-                          msg.role === "user" ? "primary.contrastText" : "text.primary",
-                      }}
+                    <Typography
+                      variant="body2"
+                      sx={{ whiteSpace: "pre-wrap" }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{ whiteSpace: "pre-wrap" }}
-                      >
-                        {msg.content}
-                      </Typography>
-                    </Paper>
-                  </Box>
-                ))}
-              </Box>
+                      {msg.content}
+                    </Typography>
+                  </Paper>
+                </Box>
+              ))}
+            </Box>
 
-              {/* 入力欄 */}
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  p: 1.5,
-                  borderTop: 1,
-                  borderColor: "divider",
-                  flexShrink: 0,
-                }}
-              >
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="追加で質問する..."
-                />
-                <IconButton color="primary">
-                  <SendIcon />
-                </IconButton>
-              </Box>
-            </>
-          )}
+            {/* 入力欄 */}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                p: 1.5,
+                borderTop: 1,
+                borderColor: "divider",
+                flexShrink: 0,
+              }}
+            >
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="追加で質問する..."
+              />
+              <IconButton color="primary">
+                <SendIcon />
+              </IconButton>
+            </Box>
+          </>
         </Paper>
-      </Box>
-
-      {/* パターン切り替えボタン（モック確認用） */}
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1,
-          p: 1,
-          justifyContent: "center",
-          borderTop: 1,
-          borderColor: "divider",
-        }}
-      >
-        <Button
-          size="small"
-          variant={pattern === "apiKey" ? "contained" : "outlined"}
-          onClick={() => setPattern("apiKey")}
-        >
-          APIキー入力
-        </Button>
-        <Button
-          size="small"
-          variant={pattern === "chat" ? "contained" : "outlined"}
-          onClick={() => setPattern("chat")}
-        >
-          チャット
-        </Button>
       </Box>
     </Box>
   );
