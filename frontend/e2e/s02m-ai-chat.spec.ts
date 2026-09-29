@@ -49,6 +49,68 @@ async function openAiChatModal(page: import("@playwright/test").Page) {
 }
 
 test.describe("S-02-M AIチャットモーダル", () => {
+  /** 初回・追加質問の送信回数と、履歴復元時に再送されないことを検証する。 */
+  test("初回質問・追加質問は各1回だけ送信し、履歴復元では再送しない", async ({ page }) => {
+    // 通信前にキャンセルされたリクエストも含め、fetch自体の呼び出しを数える。
+    await page.addInitScript(() => {
+      const testWindow = window as Window & { explainFetchCount: number };
+      testWindow.explainFetchCount = 0;
+      const originalFetch = window.fetch.bind(window);
+      /** APIへの送信試行を計測し、通常の通信・キャンセル動作は維持する。 */
+      window.fetch = (...args: Parameters<typeof fetch>) => {
+        const input = args[0];
+        const url = input instanceof Request ? input.url : String(input);
+        if (new URL(url, window.location.href).pathname === "/api/explain") {
+          testWindow.explainFetchCount += 1;
+        }
+        return originalFetch(...args);
+      };
+    });
+
+    // 外部サービスを呼ばず、実際のモーダルと送信処理だけを検証する。
+    await page.route("https://www.youtube.com/**", (route) => route.abort());
+    await page.route("**/api/explain", (route) =>
+      route.fulfill({ json: MOCK_EXPLAIN_RESPONSE })
+    );
+
+    await openAiChatModal(page);
+
+    const initialMessage = page.getByText(
+      "「Photosynthesis」について解説してください。",
+      { exact: true }
+    );
+    const replies = page.getByText(MOCK_EXPLAIN_RESPONSE.content, { exact: true });
+    const input = page.getByPlaceholder("追加で質問する...");
+
+    await expect(replies).toHaveCount(1);
+    await expect(input).toBeEnabled();
+    await expect(initialMessage).toHaveCount(1);
+    expect(await page.evaluate(() =>
+      (window as Window & { explainFetchCount: number }).explainFetchCount
+    )).toBe(1);
+
+    await input.fill("もう少し簡単に説明してください。");
+    await input.press("Enter");
+    await expect(replies).toHaveCount(2);
+    await expect(input).toBeEnabled();
+    await expect(initialMessage).toHaveCount(1);
+    await expect(page.getByText("もう少し簡単に説明してください。", { exact: true })).toHaveCount(1);
+    expect(await page.evaluate(() =>
+      (window as Window & { explainFetchCount: number }).explainFetchCount
+    )).toBe(2);
+
+    await page.locator("button").filter({ has: page.getByTestId("CloseIcon") }).click();
+    await expect(input).toBeHidden();
+    await page.locator("button").filter({ has: page.getByTestId("ChatIcon") }).click();
+
+    await expect(input).toBeEnabled();
+    await expect(initialMessage).toHaveCount(1);
+    await expect(replies).toHaveCount(2);
+    expect(await page.evaluate(() =>
+      (window as Window & { explainFetchCount: number }).explainFetchCount
+    )).toBe(2);
+  });
+
   test("AI回答: チャット欄に表示される", async ({
     page,
   }) => {

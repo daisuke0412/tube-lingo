@@ -179,7 +179,7 @@ export default function LearningScreen() {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* YouTubeプレーヤー */}
-      <Box sx={{ height: 220, bgcolor: "#1a1a1a", flexShrink: 0 }}>
+      <Box sx={{ height: 300, bgcolor: "#1a1a1a", flexShrink: 0 }}>
         <Box ref={playerRef} sx={{ width: "100%", height: "100%" }} />
       </Box>
 

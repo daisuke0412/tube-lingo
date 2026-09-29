@@ -8,7 +8,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeRegistry>
       <Box sx={{ bgcolor: "grey.200", minHeight: "100vh" }}>
-        <Box sx={{ maxWidth: 480, mx: "auto", height: "100vh", bgcolor: "white" }}>
+        <Box sx={{ maxWidth: 600, mx: "auto", height: "100vh", bgcolor: "white" }}>
           <App />
         </Box>
       </Box>

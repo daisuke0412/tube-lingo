@@ -29,11 +29,12 @@ export function useTranscriptSync(
     const interval = setInterval(() => {
       const currentTime = getCurrentTime();
 
-      // 現在再生中の字幕行を特定
+      // 現在再生中の字幕行を特定（字幕データが遅れ気味のため先読みオフセットを加算）
+      const LOOKAHEAD = 2.3;
       const index = transcript.findIndex(
         (item) =>
-          currentTime >= item.start &&
-          currentTime < item.start + item.duration
+          (currentTime + LOOKAHEAD) >= item.start &&
+          (currentTime + LOOKAHEAD) < item.start + item.duration
       );
 
       // 前回と同じなら更新しない（不要な再レンダリング防止）
@@ -47,7 +48,7 @@ export function useTranscriptSync(
         const el = lineRefs.current.get(index);
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       }
-    }, 500);
+    }, 100);
 
     return () => clearInterval(interval);
   }, [transcript, getCurrentTime, isPlayerReady]);

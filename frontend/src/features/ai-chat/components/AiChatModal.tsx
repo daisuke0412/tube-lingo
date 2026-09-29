@@ -38,11 +38,23 @@ export default function AiChatModal({
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // モーダルopen時に初回質問を自動送信
+  /** 初回送信を予約し、破棄されたEffectからの送信とメッセージ追加を防ぐ。 */
   useEffect(() => {
-    if (open) {
-      sendInitialMessage();
-    }
+    if (!open) return;
+
+    let cancelled = false;
+    // 同期的なクリーンアップを終えてから、有効な予約だけを実行する。
+    /** 送信開始前に予約の有効性を確認する。 */
+    queueMicrotask(() => {
+      if (!cancelled) {
+        sendInitialMessage();
+      }
+    });
+
+    /** 閉じた場合やEffectが再実行される場合は、未実行の予約を無効化する。 */
+    return () => {
+      cancelled = true;
+    };
   }, [open, sendInitialMessage]);
 
   // メッセージ数が増えたときのみスクロール
