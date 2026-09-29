@@ -1,6 +1,6 @@
-import AiChatModal from "../features/ai-chat/components/AiChatModal";
+import AiChatModalMock from "../features/ai-chat/components/mock/AiChatModalMock";
 
-/** AIチャットモーダル確認用ページ（ai-chat）*/
+/** AIチャットモーダル確認用ページ（/mock/ai-chat）*/
 export default function AiChatPage() {
-  return <AiChatModal/>
+  return <AiChatModalMock/>
 }
